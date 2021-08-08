@@ -19,7 +19,7 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn)
     ROS_WARN("HERE\n");
     
   }
-  void LidarFilter::reconfig(HsvExampleConfig& config, uint32_t level)
+  void LidarFilter::reconfig(GolfcartPushConfig& config, uint32_t level)
   {
 
     return;

@@ -8,7 +8,7 @@
 
 // Dynamic reconfigure stuff
 #include <dynamic_reconfigure/server.h>  
-#include <golfcart_push/HsvExampleConfig.h>
+#include <golfcart_push/GolfcartPushConfig.h>
 
 // Message headers
 #include <sensor_msgs/PointCloud2.h>  // Message definition
@@ -35,9 +35,9 @@ namespace golfcart_push {
     private:
     
       void timerCallback(const ros::TimerEvent& event);
-      void reconfig(HsvExampleConfig& config, uint32_t level);
+      void reconfig(GolfcartPushConfig& config, uint32_t level);
 
-      dynamic_reconfigure::Server<HsvExampleConfig> srv_;
+      dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
       
       
       ros::Timer timer_;

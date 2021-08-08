@@ -36,7 +36,7 @@ HsvExample::HsvExample(ros::NodeHandle n, ros::NodeHandle pn)
   cv::namedWindow("V_thres", cv::WINDOW_AUTOSIZE);
 }
 
-void HsvExample::reconfig(HsvExampleConfig& config, uint32_t level)
+void HsvExample::reconfig(GolfcartPushConfig& config, uint32_t level)
 {
   // Apply threshold to saturation channel
   // Mark all pixels with saturation above threshold as white (255)

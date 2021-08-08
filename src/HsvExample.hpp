@@ -5,7 +5,7 @@
 #include <opencv2/opencv.hpp> // Basic opencv lib
 
 #include <dynamic_reconfigure/server.h>
-#include <golfcart_push/HsvExampleConfig.h>
+#include <golfcart_push/GolfcartPushConfig.h>
 #include <ros/package.h>
 
 namespace golfcart_push {
@@ -16,12 +16,12 @@ namespace golfcart_push {
       HsvExample(ros::NodeHandle n, ros::NodeHandle pn);
       
     private:
-      void reconfig(HsvExampleConfig& config, uint32_t level);
+      void reconfig(GolfcartPushConfig& config, uint32_t level);
       void timerCallback(const ros::TimerEvent& event);
       
       ros::Timer refresh_timer_;
       
-      dynamic_reconfigure::Server<HsvExampleConfig> srv_;
+      dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
       
       // Input image channels
       cv::Mat hue_channel; // cv::Mat is for 1 image and a matrix, we will split into each channel

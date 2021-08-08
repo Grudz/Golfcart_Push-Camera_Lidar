@@ -18,7 +18,7 @@ add_compile_options(-std=c++17)
 find_package(OpenCV REQUIRED)
 
 generate_dynamic_reconfigure_options(
-  cfg/HsvExample.cfg
+  cfg/GolfcartPush.cfg
 )
 
 catkin_package(
