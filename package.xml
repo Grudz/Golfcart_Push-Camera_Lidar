@@ -14,5 +14,10 @@
   <depend>roscpp</depend>
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
+  <depend>rospy</depend>
+  <depend>pcl_ros</depend>
+  <depend>avs_lecture_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
 
 </package>

@@ -6,7 +6,14 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   cv_bridge
   roscpp
+  rospy
+  pcl_ros
+  std_msgs
+  geometry_msgs
+  avs_lecture_msgs
 )
+
+add_compile_options(-std=c++17)
 
 find_package(OpenCV REQUIRED)
 
@@ -28,6 +35,7 @@ add_executable(hsv_example_node
   src/HsvExample.cpp
 )
 add_dependencies(hsv_example_node
+  ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
 target_link_libraries(hsv_example_node
@@ -35,3 +43,14 @@ target_link_libraries(hsv_example_node
   ${OpenCV_LIBS}
 )
 
+add_executable(lidar_filter
+  src/lidar_filter_node.cpp
+  src/lidar_filter.cpp
+)
+add_dependencies(lidar_filter
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+target_link_libraries(lidar_filter
+  ${catkin_LIBRARIES}
+)
