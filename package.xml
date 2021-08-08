@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>golfcart_push</name>
+  <version>0.0.0</version>
+  <description>
+    I, Ben, took a bag file of a golf cart, then used Micho's class examples to piece together a cool project.
+  </description>
+  <maintainer email="mtradovn@oakland.edu">Micho Radovnikovich</maintainer>
+  <maintainer email="bengrudz88@gmail.com">Ben Grudzien</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>roscpp</depend>
+  <depend>image_transport</depend>
+  <depend>cv_bridge</depend>
+
+</package>
