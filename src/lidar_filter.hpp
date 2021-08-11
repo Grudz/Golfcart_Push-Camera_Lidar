@@ -1,3 +1,26 @@
+/*
+
+~ Linux Penguin ~
+
+        _nnnn_
+        dGGGGMMb
+       @p~qp~~qMb
+       M|@||@) M|
+       @,----.JM|
+      JS^\__/  qKL
+     dZP        qKRb
+    dZP          qKKb
+   fZP            SMMb
+   HZM            MMMM
+   FqM            MMMM
+ __| ".        |\dS"qML
+ |    `.       | `' \Zq
+_)      \.___.,|     .'
+\____   )MMMMMP|   .'
+     `-'       `--' 
+
+*/
+
 #pragma once
 
 // ROS headers
@@ -36,11 +59,15 @@ namespace golfcart_push {
     
       void timerCallback(const ros::TimerEvent& event);
       void reconfig(GolfcartPushConfig& config, uint32_t level);
+      void recvCloud(const sensor_msgs::PointCloud2ConstPtr& msg);  
 
       dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
-      
+      GolfcartPushConfig cfg_;
       
       ros::Timer timer_;
+
+      ros::Subscriber sub_cloud_;
+      ros::Publisher pub_cloud_;
       
   };
 }
