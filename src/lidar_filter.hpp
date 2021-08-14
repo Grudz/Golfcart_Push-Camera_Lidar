@@ -47,6 +47,7 @@ _)      \.___.,|     .'
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 namespace golfcart_push {
 

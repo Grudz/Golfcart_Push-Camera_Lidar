@@ -39,19 +39,31 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn)
     passthrough_filter.setFilterFieldName("x"); // 3 fields, hence PointXYZI
     passthrough_filter.setFilterLimits(cfg_.x_min, cfg_.x_max);
     passthrough_filter.filter(*roi_indices);    // Referes to input cloud
+
     // Extract Y points
     passthrough_filter.setIndices(roi_indices);
     passthrough_filter.setFilterFieldName("y"); 
     passthrough_filter.setFilterLimits(cfg_.y_min, cfg_.y_max);
-    passthrough_filter.filter(*roi_indices);    
- 
-    // Extract Z points. 
-    //ROS_INFO("Total points in cloud in = %d\n", (int)cloud_in->size());
-    //passthrough_filter.setIndices(roi_indices);
+    passthrough_filter.filter(*roi_indices);  
+
+    // Extract Y points
+    passthrough_filter.setIndices(roi_indices);
     passthrough_filter.setFilterFieldName("z"); 
     passthrough_filter.setFilterLimits(cfg_.z_min, cfg_.z_max);
-    passthrough_filter.filter(*cloud_out);     // Final stage so pass filter cloud so instead of int array it's a corresponding point cloud  
-    //ROS_INFO("Total points in cloud out = %d\n", (int)cloud_out->size());
+    passthrough_filter.filter(*roi_indices);  
+ 
+    // Extract intensity points. 
+    passthrough_filter.setIndices(roi_indices);
+    passthrough_filter.setFilterFieldName("intensity"); 
+    passthrough_filter.setFilterLimits(cfg_.i_min, cfg_.i_max);
+    passthrough_filter.filter(*cloud_out);     // Final stage so pass filter cloud so instead of int array it's a corresponding point cloud 
+
+    // Statistical filter for removing outliers - This affects random clusters on ground and point density of large objects
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor;
+    sor.setInputCloud(cloud_out);
+    sor.setMeanK(cfg_.sor_mean);
+    sor.setStddevMulThresh(cfg_.sor_stddev);
+    sor.filter(*cloud_out); 
 
     // Copy filtered data into a ROS message
     sensor_msgs::PointCloud2 filtered_cloud;
@@ -61,33 +73,6 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn)
 
     // Publish Passthrough filter PointCloud
     pub_cloud_.publish(filtered_cloud);
-
-    /*
-    // Create pointer to PCL type variable
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
-
-    // From sensor msg to pcl
-    pcl::fromROSMsg(*msg, *cloud_in); 
-   
-    for (int i = 0; i < (int)cloud_in->size(); i++)
-    {
-      double intensity = (double)cloud_in->points.at(i).intensity;
-      //ROS_INFO("Intensity value per point is %f\n", intensity);
-      if (intensity < 50)
-      {
-        cloud_in->points.at(i) = std::numeric_limits<float>::quiet_NaN();
-      }
-    }
-
-    // Copy filtered data into a ROS message
-    sensor_msgs::PointCloud2 filtered_cloud;
-    pcl::toROSMsg(*cloud_in, filtered_cloud);
-
-    filtered_cloud.header = msg->header;
-
-    // Publish Passthrough filter PointCloud
-    pub_cloud_.publish(filtered_cloud);
-    */
 
   }
 
