@@ -13,6 +13,7 @@
   <depend>dynamic_reconfigure</depend>
   <depend>roscpp</depend>
   <depend>image_transport</depend>
+  <depend>image_geometry</depend>
   <depend>cv_bridge</depend>
   <depend>rospy</depend>
   <depend>pcl_ros</depend>

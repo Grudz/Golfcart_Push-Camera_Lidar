@@ -4,6 +4,7 @@ project(golfcart_push)
 find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   image_transport
+  image_geometry
   cv_bridge
   roscpp
   rospy
@@ -12,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   avs_lecture_msgs
 )
+find_package(OpenCV REQUIRED)
 
 add_compile_options(-std=c++17)
 
@@ -54,3 +56,17 @@ add_dependencies(lidar_filter
 target_link_libraries(lidar_filter
   ${catkin_LIBRARIES}
 )
+
+add_executable(camera_vision
+  src/camera_vision_node.cpp
+  src/camera_vision.cpp
+)
+add_dependencies(camera_vision
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+target_link_libraries(camera_vision
+  ${catkin_LIBRARIES}
+)
+
+
