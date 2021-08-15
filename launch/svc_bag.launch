@@ -14,7 +14,7 @@
 
   <!-- Run camera_vision node -->
   <node pkg="golfcart_push" type="camera_vision" name="camera_vision" output="screen" >
-    <remap from="input_images" to="/front_camera/image_raw" /> 
+    <remap from="input_images" to="/front_camera/image_rect_color" /> <!-- /front_camera/image_raw -->
   </node>
 
   <!-- Rviz config -->

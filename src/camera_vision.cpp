@@ -13,14 +13,13 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn)
   // Set up dynamic reconfigure server to adjust threshold parameters
   srv_.setCallback(boost::bind(&CameraVision::reconfig, this, _1, _2));
 
-  //pn.param("camera_name", camera_name_, std::string("front_camera"));
-  cv::namedWindow("Binary", cv::WINDOW_NORMAL);
+  cv::namedWindow("Binary", cv::WINDOW_AUTOSIZE);
 
 }
   // Passthrough filter function
   void CameraVision::recvImage(const sensor_msgs::ImageConstPtr& msg)
   {
-    ROS_WARN("Subbed!");
+
     // Convert ROS image message into an OpenCV Mat
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);  // Kinda like PCL library
     cv::Mat raw_img = cv_ptr->image;
@@ -73,7 +72,7 @@ void CameraVision::detectWhite(const cv::Mat& sat_img, const cv::Mat& val_img, c
   void CameraVision::timerCallback(const ros::TimerEvent& event)
   {
 
-    ROS_WARN("HERE\n");
+    return;
     
   }
   void CameraVision::reconfig(GolfcartPushConfig& config, uint32_t level)
