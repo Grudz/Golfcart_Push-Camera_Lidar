@@ -41,33 +41,33 @@ void HsvExample::reconfig(GolfcartPushConfig& config, uint32_t level)
   // Apply threshold to saturation channel
   // Mark all pixels with saturation above threshold as white (255)
   // Mark all pixels with saturation below threshold as black (0)
-  cv::threshold(sat_channel, sat_thres, config.s_thres, 255, cv::THRESH_BINARY); // cv::THRESH_BINARY = applies 0 for less than threshold, else 255
+  cv::threshold(sat_channel, sat_thres, config.demo_s_thres, 255, cv::THRESH_BINARY); // cv::THRESH_BINARY = applies 0 for less than threshold, else 255
 
   // Apply threshold to value channel
   // Mark all pixels with value above threshold as white (255)
   // Mark all pixels with value below threshold as black (0)
-  cv::threshold(val_channel, val_thres, config.v_thres, 255, cv::THRESH_BINARY);
+  cv::threshold(val_channel, val_thres, config.demo_v_thres, 255, cv::THRESH_BINARY);
 
   // Apply threshold to hue channel
   cv::Mat t1;
   cv::Mat t2;
-  int h_pos_edge = config.h_center + config.h_width; // Upper edge of hue window
-  int h_neg_edge = config.h_center - config.h_width; // Lower edge of hue window
+  int h_pos_edge = config.demo_h_center + config.demo_h_width; // Upper edge of hue window
+  int h_neg_edge = config.demo_h_center - config.demo_h_width; // Lower edge of hue window
   // Roll over
   if (h_pos_edge > 180) { 
     // Apply thresholds when upper edge overflows 180
     cv::threshold(hue_channel, t1, h_pos_edge - 180, 255, cv::THRESH_BINARY_INV);  
-    cv::threshold(hue_channel, t2, config.h_center - config.h_width, 255, cv::THRESH_BINARY);  
+    cv::threshold(hue_channel, t2, config.demo_h_center - config.demo_h_width, 255, cv::THRESH_BINARY);  
     cv::bitwise_or(t1, t2, hue_thres);
   } else if (h_neg_edge < 0) {
     // Apply thresholds when lower edge underflows 0
     cv::threshold(hue_channel, t1, h_neg_edge + 180, 255, cv::THRESH_BINARY);  
-    cv::threshold(hue_channel, t2, config.h_center + config.h_width, 255, cv::THRESH_BINARY_INV);  
+    cv::threshold(hue_channel, t2, config.demo_h_center + config.demo_h_width, 255, cv::THRESH_BINARY_INV);  
     cv::bitwise_or(t1, t2, hue_thres); // OR -> 0 if both 0 (Concatenate)
   } else {
     // Apply thresholds when hue window is continuous
-    cv::threshold(hue_channel, t1, config.h_center - config.h_width, 255, cv::THRESH_BINARY);
-    cv::threshold(hue_channel, t2, config.h_center + config.h_width, 255, cv::THRESH_BINARY_INV);
+    cv::threshold(hue_channel, t1, config.demo_h_center - config.demo_h_width, 255, cv::THRESH_BINARY);
+    cv::threshold(hue_channel, t2, config.demo_h_center + config.demo_h_width, 255, cv::THRESH_BINARY_INV);
     cv::bitwise_and(t1, t2, hue_thres); // AND -> 1 if both 1
   }
 }

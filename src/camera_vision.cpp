@@ -46,13 +46,13 @@ void CameraVision::segmentImage(const cv::Mat& raw_img, cv::Mat& bin_img)
 
   // Detect white lane marking pixels in the image
   cv::Mat white_bin_img = cv::Mat::zeros(raw_hsv.size(), CV_8U); // Have to initialize to 0's
-  detectWhite(sat_img, val_img, white_bin_img);
+  detectTape(hue_img, sat_img, val_img, white_bin_img);
 
   bin_img = white_bin_img;
   
 }
 
-void CameraVision::detectWhite(const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img)
+void CameraVision::detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img)
 {
   // Apply threshold to generate a binary value image. White lines have
   // higher value than the road
@@ -64,9 +64,35 @@ void CameraVision::detectWhite(const cv::Mat& sat_img, const cv::Mat& val_img, c
   cv::Mat sat_thres;
   cv::threshold(sat_img, sat_thres, cfg_.sat_thres, 255, cv::THRESH_BINARY_INV); // Low saturation
 
+  // Threshold hue
+  cv::Mat t1;
+  cv::Mat t2;
+  cv::Mat hue_thres;
+  int h_pos_edge = cfg_.h_center + cfg_.h_width; // Upper edge of hue window
+  int h_neg_edge = cfg_.h_center - cfg_.h_width; // Lower edge of hue window
+  if (h_pos_edge > 180) {
+    // Apply thresholds when upper edge overflows 180
+    cv::threshold(hue_img, t1, h_pos_edge - 180, 255, cv::THRESH_BINARY_INV);  
+    cv::threshold(hue_img, t2, cfg_.h_center - cfg_.h_width, 255, cv::THRESH_BINARY);  
+    cv::bitwise_or(t1, t2, hue_thres);
+  } else if (h_neg_edge < 0) {
+    // Apply thresholds when lower edge underflows 0
+    cv::threshold(hue_img, t1, h_neg_edge + 180, 255, cv::THRESH_BINARY);  
+    cv::threshold(hue_img, t2, cfg_.h_center + cfg_.h_width, 255, cv::THRESH_BINARY_INV);  
+    cv::bitwise_or(t1, t2, hue_thres);
+  } else {
+    // Apply thresholds when hue window is continuous
+    cv::threshold(hue_img, t1, cfg_.h_center - cfg_.h_width, 255, cv::THRESH_BINARY);
+    cv::threshold(hue_img, t2, cfg_.h_center + cfg_.h_width, 255, cv::THRESH_BINARY_INV);
+    cv::bitwise_and(t1, t2, hue_thres);
+  }
+
   // Apply bitwise AND to make sure only pixels that satisfy both value and saturation
   // thresholds make it out. Store result in ouput (white_bin_img)
-  cv::bitwise_and(val_thres, sat_thres, white_bin_img);
+  cv::Mat temp_img;
+  cv::bitwise_and(val_thres, sat_thres, temp_img);
+  cv::bitwise_and(hue_thres, temp_img, white_bin_img);
+
 }
 
   void CameraVision::timerCallback(const ros::TimerEvent& event)

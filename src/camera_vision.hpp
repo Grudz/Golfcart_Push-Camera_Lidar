@@ -67,7 +67,7 @@ namespace golfcart_push {
       void reconfig(GolfcartPushConfig& config, uint32_t level);
       void recvImage(const sensor_msgs::ImageConstPtr& msg); 
       void segmentImage(const cv::Mat& raw_img, cv::Mat& bin_img); 
-      void detectWhite(const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img);
+      void detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img);
 
       dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
       GolfcartPushConfig cfg_;
