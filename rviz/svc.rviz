@@ -109,8 +109,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 2.2018027305603027
-        Min Value: 0.0033707618713378906
+        Max Value: 0.2071230411529541
+        Min Value: 0.1701195240020752
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -128,7 +128,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 5
+      Size (Pixels): 4
       Size (m): 0.03999999910593033
       Style: Points
       Topic: /filtered_cloud
@@ -178,6 +178,19 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: avs_visualization/ObjectArrayDisplay
+      Enabled: true
+      Name: ObjectArrayDisplay
+      Topic: /bounding_boxes
+      Unreliable: false
+      Value: true
+      alpha: 0.6000000238418579
+      color: 250; 210; 0
+      line width: 0.05000000074505806
+      only edge: false
+      show coords: false
+      show speed: false
+      word size: 0.699999988079071
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -206,25 +219,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 14.137838363647461
+      Distance: 12.77285099029541
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.3838565945625305
-        Y: -1.5352009534835815
-        Z: 0.6741540431976318
+        X: -1.333868145942688
+        Y: -1.936395287513733
+        Z: 2.0154197216033936
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2747981548309326
+      Pitch: 0.39979803562164307
       Target Frame: map
       Value: Orbit (rviz)
-      Yaw: 1.3335163593292236
+      Yaw: 1.3885163068771362
     Saved: ~
 Window Geometry:
   Displays:

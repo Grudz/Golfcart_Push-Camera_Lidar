@@ -85,5 +85,8 @@ namespace golfcart_push {
       tf2_ros::TransformListener listener_;
       tf2_ros::Buffer buffer_;  
 
+      // KD search tree object for use by PCL functions
+      pcl::search::Search<pcl::PointXYZ>::Ptr kd_tree_;
+
   };
 }

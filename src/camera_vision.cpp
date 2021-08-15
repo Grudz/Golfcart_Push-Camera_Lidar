@@ -3,7 +3,8 @@
 namespace golfcart_push {
 
 CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
-  listener_(buffer_)
+  listener_(buffer_), 
+  kd_tree_(new pcl::search::KdTree<pcl::PointXYZ>)
 {
   // Pointcloud subscriber
   sub_camera_ = n.subscribe("input_images", 1, &CameraVision::recvImage, this);
@@ -57,6 +58,7 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     // Project points from 2D pixel coordinates into 3D where it intersects
     // the ground plane, and put them in a PCL point cloud
     pcl::PointCloud<pcl::PointXYZ>::Ptr bin_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr bin_cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
 
     // Project every fourth row of the image to save some computational resources
     for (int i = 0; i < bin_img.rows; i += 4) {
@@ -70,9 +72,37 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
       }
     }
 
+    pcl::PassThrough<pcl::PointXYZ> passthrough_filter; // Instantiate filter. Will find x, y, z points that will satisfy ROI
+    pcl::IndicesPtr roi_indices(new std::vector <int>);
+
+    // Put pointer to input cloud in passthrough filter
+    passthrough_filter.setInputCloud(bin_cloud);
+
+    // Index is relative to the Lidar frame
+    // Extract X points
+    passthrough_filter.setFilterFieldName("x"); // 3 fields, hence PointXYZI
+    passthrough_filter.setFilterLimits(cfg_.cam_x_min, cfg_.cam_x_max);
+    passthrough_filter.filter(*roi_indices);    // Referes to input cloud
+
+    // Extract Y points
+    passthrough_filter.setIndices(roi_indices);
+    passthrough_filter.setFilterFieldName("y"); 
+    passthrough_filter.setFilterLimits(cfg_.cam_y_min, cfg_.cam_y_max);
+    passthrough_filter.filter(*roi_indices);  
+
+    // Extract Y points
+    passthrough_filter.setIndices(roi_indices);
+    passthrough_filter.setFilterFieldName("z"); 
+    passthrough_filter.setFilterLimits(cfg_.cam_z_min, cfg_.cam_z_max);
+    passthrough_filter.filter(*bin_cloud_filtered);  
+ 
+    //std::cout << bin_cloud_filtered->size() << std::endl;
+
+    // Clustering used to fit curve later (see kd_tree)
+
     // Publish point cloud to visualize in Rviz
     sensor_msgs::PointCloud2 cam_cloud_msg;
-    pcl::toROSMsg(*bin_cloud, cam_cloud_msg);
+    pcl::toROSMsg(*bin_cloud_filtered, cam_cloud_msg);
     cam_cloud_msg.header.frame_id = "camera";
     cam_cloud_msg.header.stamp = msg->header.stamp;
     pub_cam_cloud_.publish(cam_cloud_msg);

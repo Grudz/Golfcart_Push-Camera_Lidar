@@ -2,12 +2,13 @@
 
 namespace golfcart_push {
 
-LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn)
+LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new pcl::search::KdTree<pcl::PointXYZI>)
 {
   // Pointcloud subscriber
   sub_cloud_ = n.subscribe("input_points", 10, &LidarFilter::recvCloud, this);
 
   pub_cloud_= n.advertise<sensor_msgs::PointCloud2>("filtered_cloud", 1);
+  pub_bbox_= n.advertise<avs_lecture_msgs::TrackedObjectArray>("bounding_boxes", 1);
 
   // This timer just refreshes the output displays to always reflect the current threshold settings
   timer_ = n.createTimer(ros::Duration(0.05), &LidarFilter::timerCallback, this);
@@ -74,6 +75,86 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn)
 
     // Publish Passthrough filter PointCloud
     pub_cloud_.publish(filtered_cloud);
+
+    // Euclidean clustering 
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+    ec.setClusterTolerance(cfg_.cluster_tol);
+    ec.setMinClusterSize(cfg_.min_cluster_size); // ------- TODO
+    ec.setMaxClusterSize(cfg_.max_cluster_size);
+    kd_tree_->setInputCloud(cloud_out);
+    ec.setSearchMethod(kd_tree_);
+    ec.setInputCloud(cloud_out);
+    ec.extract(cluster_indices);
+
+    // Use indices arrays to separate point cloud into individual clouds for each cluster
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cluster_clouds;
+    for (auto indices : cluster_indices) 
+    {
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::copyPointCloud(*cloud_out, indices, *cluster);
+      cluster->width = cluster->points.size();
+      cluster->height = 1;
+      cluster->is_dense = true;
+      cluster_clouds.push_back(cluster);
+    }
+
+    // Use max and min of each cluster to create bbox
+    pcl::PointXYZ min, max;  // Relative to the Lidar
+    //ROS_INFO("\n----- Loop Start -----\n");
+    //ROS_INFO("Clusters in scan = %d\n", (int)cluster_clouds.size());  // Is this so bad? Draw a new box for each new sequence?
+
+    // Copy header from passthrough cloud and clear array
+    bbox_array_.header = pcl_conversions::fromPCL(cloud_out->header); // Nice way to get entire header easily
+    bbox_array_.objects.clear();
+    bbox_id_ = 0;
+
+    // Loop through clusters and box up
+    for (auto& cluster : cluster_clouds) 
+    {  
+      
+      // Applying the min/max function
+      pcl::getMinMax3D(*cluster, min, max);  // Get min/max 3D
+      //ROS_INFO("Header seq per cluster = %d\n", (int)cluster->header.seq);
+
+      // Create bbox message, fill in fields, push it into bbox array
+      avs_lecture_msgs::TrackedObject bbox;  // rosmsg show TrackedObjectArray
+      
+      bbox.header = bbox_array_.header;
+      bbox.spawn_time.ros::Time::now(); // Spawn it right now
+      bbox.id = bbox_id_++;
+      bbox.bounding_box_scale.x = max.x - min.x;
+      bbox.bounding_box_scale.y = max.y - min.y;
+      bbox.bounding_box_scale.z = max.z - min.z;
+      bbox.pose.position.x = (max.x + min.x) / 2; 
+      bbox.pose.position.y = (max.y + min.y) / 2; 
+      bbox.pose.position.z = (max.z + min.z) / 2; 
+      bbox.pose.orientation.w = 1.0;
+          /*
+           if                                       2    >    0.1                      1.9    <    0.03
+              1) Catch tall skiny clusters ##### (Hieght > tall cutoff z Height) && (Width < skinier x Width)
+                                                    2    <   0.03                      1.9    >    0.15
+              2) Catch short flat clusters ##### (Hieght < small cutoff z Height) && (Width > wider x Width)              
+          */
+      if (((abs(bbox.pose.position.z) > cfg_.z_large) && (abs(bbox.bounding_box_scale.x) < cfg_.x_tall)) ||
+          ((abs(bbox.pose.position.z) < cfg_.z_small) && (abs(bbox.bounding_box_scale.x) > cfg_.x_long)))
+      {
+        ROS_FATAL("\nCluster thrown out");
+        std::cout << "X value = " << bbox.pose.position.x << std::endl;
+        std::cout << "Z value = " << bbox.pose.position.z << std::endl;
+      } 
+      else 
+      {
+        bbox_array_.objects.push_back(bbox);
+        ROS_WARN("\nCluster accepted");
+        std::cout << "X value = " << bbox.pose.position.x << std::endl;
+        std::cout << "Z value = " << bbox.pose.position.z << std::endl;
+      }
+      
+      
+    } 
+    
+    pub_bbox_.publish(bbox_array_);
 
   }
 

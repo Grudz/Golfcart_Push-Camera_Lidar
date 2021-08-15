@@ -48,6 +48,7 @@ _)      \.___.,|     .'
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <avs_lecture_msgs/TrackedObjectArray.h>
 
 namespace golfcart_push {
 
@@ -69,6 +70,15 @@ namespace golfcart_push {
 
       ros::Subscriber sub_cloud_;
       ros::Publisher pub_cloud_;
+
+      // KD search tree object for use by PCL functions
+      pcl::search::Search<pcl::PointXYZI>::Ptr kd_tree_;
+      ros::Publisher pub_cluster_cloud_;
+      ros::Publisher pub_bbox_;
+
+      // Publishing bounding box message
+      avs_lecture_msgs::TrackedObjectArray bbox_array_;
+      int bbox_id_;
       
   };
 }
