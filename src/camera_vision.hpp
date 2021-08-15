@@ -68,16 +68,22 @@ namespace golfcart_push {
       void recvImage(const sensor_msgs::ImageConstPtr& msg); 
       void segmentImage(const cv::Mat& raw_img, cv::Mat& bin_img); 
       void detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img);
+      void recvCameraInfo(const sensor_msgs::CameraInfoConstPtr& msg);
+      pcl::PointXYZ projectPoint(const image_geometry::PinholeCameraModel& model, const cv::Point2d& p);
 
       dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
       GolfcartPushConfig cfg_;
       
       ros::Timer timer_;
 
+      ros::Publisher pub_cam_cloud_;
       ros::Subscriber sub_camera_;
+      ros::Subscriber sub_cam_info_;
+      sensor_msgs::CameraInfo camera_info_;
+      tf2::Transform camera_transform_; // Coordinate transformation from footprint to camera
+      bool looked_up_camera_transform_;
+      tf2_ros::TransformListener listener_;
+      tf2_ros::Buffer buffer_;  
 
-      std::string camera_name_;
-
-      
   };
 }

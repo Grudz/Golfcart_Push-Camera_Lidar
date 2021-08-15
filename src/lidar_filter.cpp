@@ -19,6 +19,7 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn)
   // Passthrough filter function
   void LidarFilter::recvCloud(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
+
     // Create pointer to PCL type variable
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
     //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZ>);

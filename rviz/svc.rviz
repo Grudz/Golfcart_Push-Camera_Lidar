@@ -4,7 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
+        - /Grid1/Offset1
       Splitter Ratio: 0.5
     Tree Height: 353
   - Class: rviz/Selection
@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Filtered Cloud
+    SyncSource: Image Rect Color
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -39,6 +39,8 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        camera:
+          Value: true
         map:
           Value: true
         velodyne:
@@ -50,6 +52,8 @@ Visualization Manager:
       Show Names: true
       Tree:
         map:
+          camera:
+            {}
           velodyne:
             {}
       Update Interval: 0
@@ -67,7 +71,7 @@ Visualization Manager:
       Offset:
         X: 0
         Y: 0
-        Z: -1
+        Z: 0
       Plane: XY
       Plane Cell Count: 1000
       Reference Frame: <Fixed Frame>
@@ -75,8 +79,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 13.372657775878906
-        Min Value: -18.223283767700195
+        Max Value: 18.205476760864258
+        Min Value: -0.3373875617980957
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -84,7 +88,7 @@ Visualization Manager:
       Color: 238; 238; 236
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 144
@@ -101,18 +105,18 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
+        Max Value: 2.2018027305603027
+        Min Value: 0.0033707618713378906
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color: 114; 159; 207
+      Color Transformer: AxisColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -124,7 +128,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 7
+      Size (Pixels): 5
       Size (m): 0.03999999910593033
       Style: Points
       Topic: /filtered_cloud
@@ -143,6 +147,36 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: Camera Cloud
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Points
+      Topic: /cam_cloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -172,25 +206,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.306577682495117
+      Distance: 14.137838363647461
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.8321020603179932
-        Y: -1.0966943502426147
-        Z: 0.7395174503326416
+        X: -0.3838565945625305
+        Y: -1.5352009534835815
+        Z: 0.6741540431976318
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.37479835748672485
+      Pitch: 0.2747981548309326
       Target Frame: map
       Value: Orbit (rviz)
-      Yaw: 0.9835801124572754
+      Yaw: 1.3335163593292236
     Saved: ~
 Window Geometry:
   Displays:
