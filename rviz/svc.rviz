@@ -39,6 +39,8 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        base_link:
+          Value: true
         camera:
           Value: true
         map:
@@ -51,6 +53,8 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
+        base_link:
+          {}
         map:
           camera:
             {}
@@ -79,8 +83,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 18.205476760864258
-        Min Value: -0.3373875617980957
+        Max Value: 17.223594665527344
+        Min Value: -0.4771571159362793
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -88,7 +92,7 @@ Visualization Manager:
       Color: 238; 238; 236
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 144
@@ -105,12 +109,12 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.2071230411529541
-        Min Value: 0.1701195240020752
+        Max Value: 0.20005548000335693
+        Min Value: 0.16567933559417725
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -118,7 +122,7 @@ Visualization Manager:
       Color: 114; 159; 207
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 3
@@ -135,7 +139,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: true
       Image Topic: /front_camera/image_rect_color
@@ -166,11 +170,11 @@ Visualization Manager:
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: Camera Cloud
+      Name: Ground Tape (From Camera)
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 6
       Size (m): 0.009999999776482582
       Style: Points
       Topic: /cam_cloud
@@ -180,22 +184,22 @@ Visualization Manager:
       Value: true
     - Class: avs_visualization/ObjectArrayDisplay
       Enabled: true
-      Name: ObjectArrayDisplay
+      Name: Sign Posts
       Topic: /bounding_boxes
       Unreliable: false
       Value: true
-      alpha: 0.6000000238418579
-      color: 250; 210; 0
+      alpha: 1
+      color: 92; 192; 255
       line width: 0.05000000074505806
       only edge: false
       show coords: false
       show speed: false
-      word size: 0.699999988079071
+      word size: 0.6000000238418579
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -219,25 +223,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.77285099029541
+      Distance: 13.672516822814941
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.333868145942688
-        Y: -1.936395287513733
-        Z: 2.0154197216033936
+        X: 1.8864495754241943
+        Y: -1.1202248334884644
+        Z: 2.3367574214935303
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.39979803562164307
+      Pitch: 0.5747987031936646
       Target Frame: map
       Value: Orbit (rviz)
-      Yaw: 1.3885163068771362
+      Yaw: 0.93351811170578
     Saved: ~
 Window Geometry:
   Displays:

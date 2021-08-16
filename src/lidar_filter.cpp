@@ -11,7 +11,7 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
   pub_bbox_= n.advertise<avs_lecture_msgs::TrackedObjectArray>("bounding_boxes", 1);
 
   // This timer just refreshes the output displays to always reflect the current threshold settings
-  timer_ = n.createTimer(ros::Duration(0.05), &LidarFilter::timerCallback, this);
+  timer_ = n.createTimer(ros::Duration(0.02), &LidarFilter::timerCallback, this);
 
   // Set up dynamic reconfigure server to adjust threshold parameters
   srv_.setCallback(boost::bind(&LidarFilter::reconfig, this, _1, _2));
@@ -130,28 +130,23 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
       bbox.pose.position.y = (max.y + min.y) / 2; 
       bbox.pose.position.z = (max.z + min.z) / 2; 
       bbox.pose.orientation.w = 1.0;
-          /*
-           if                                       2    >    0.1                      1.9    <    0.03
-              1) Catch tall skiny clusters ##### (Hieght > tall cutoff z Height) && (Width < skinier x Width)
-                                                    2    <   0.03                      1.9    >    0.15
-              2) Catch short flat clusters ##### (Hieght < small cutoff z Height) && (Width > wider x Width)              
-          */
-      if (((abs(bbox.pose.position.z) > cfg_.z_large) && (abs(bbox.bounding_box_scale.x) < cfg_.x_tall)) ||
-          ((abs(bbox.pose.position.z) < cfg_.z_small) && (abs(bbox.bounding_box_scale.x) > cfg_.x_long)))
+
+      if (abs(bbox.bounding_box_scale.z) < cfg_.z_large)
       {
-        ROS_FATAL("\nCluster thrown out");
-        std::cout << "X value = " << bbox.pose.position.x << std::endl;
-        std::cout << "Z value = " << bbox.pose.position.z << std::endl;
+        continue;
+        //ROS_FATAL("\nCluster thrown out");
+        //std::cout << "X scale = " << bbox.bounding_box_scale.x << std::endl;
+        //std::cout << "Y scale = " << bbox.bounding_box_scale.y << std::endl;
+        //std::cout << "Z scale = " << bbox.bounding_box_scale.z << std::endl;
       } 
-      else 
+      else
       {
         bbox_array_.objects.push_back(bbox);
-        ROS_WARN("\nCluster accepted");
-        std::cout << "X value = " << bbox.pose.position.x << std::endl;
-        std::cout << "Z value = " << bbox.pose.position.z << std::endl;
-      }
-      
-      
+        //ROS_WARN("\nCluster accepted with ID = %d", bbox.id);
+        //std::cout << "X scale = " << bbox.bounding_box_scale.x << std::endl;
+        //std::cout << "Y scale = " << bbox.bounding_box_scale.y << std::endl;
+        //std::cout << "Z scale = " << bbox.bounding_box_scale.z << std::endl;
+      }      
     } 
     
     pub_bbox_.publish(bbox_array_);
@@ -159,11 +154,30 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
   }
 
   void LidarFilter::timerCallback(const ros::TimerEvent& event)
-  {
+  {   
 
-    //ROS_WARN("HERE\n");
-    
+    static tf2_ros::TransformBroadcaster br;
+    geometry_msgs::TransformStamped transformStamped;
+  
+    transformStamped.header.stamp = ros::Time::now();
+    transformStamped.header.frame_id = "map";
+    transformStamped.child_frame_id = "base_link";
+    transformStamped.transform.translation.x = 0.0;
+    transformStamped.transform.translation.y = push_;
+    transformStamped.transform.translation.z = 0.0;
+    transformStamped.transform.rotation.x = 0;
+    transformStamped.transform.rotation.y = 0;
+    transformStamped.transform.rotation.z = 0;
+    transformStamped.transform.rotation.w = 1;
+
+    br.sendTransform(transformStamped);  
+    push_ = push_ + cfg_.tf_increment;
+    if (push_ >= 11.011) // Calculated based on timer freq and bag time
+    {
+      push_ = -0.007;
+    }
   }
+
   void LidarFilter::reconfig(GolfcartPushConfig& config, uint32_t level)
   {
 
