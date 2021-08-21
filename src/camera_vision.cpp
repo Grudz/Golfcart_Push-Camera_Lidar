@@ -10,6 +10,7 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
   sub_camera_ = n.subscribe("input_images", 1, &CameraVision::recvImage, this);
   sub_cam_info_ = n.subscribe("/front_camera/camera_info", 1, &CameraVision::recvCameraInfo, this); // Message with intrinsic properties
   pub_cam_cloud_ = n.advertise<sensor_msgs::PointCloud2>("cam_cloud", 1);
+  pub_stop_cloud_ = n.advertise<sensor_msgs::PointCloud2>("stop_cloud", 1);
 
   // This timer just refreshes the output displays to always reflect the current threshold settings
   timer_ = n.createTimer(ros::Duration(0.05), &CameraVision::timerCallback, this);
@@ -19,7 +20,8 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
 
   looked_up_camera_transform_ = false;
 
-  cv::namedWindow("Binary", cv::WINDOW_AUTOSIZE);
+  cv::namedWindow("Tape Image", cv::WINDOW_AUTOSIZE);
+  cv::namedWindow("Red Image", cv::WINDOW_AUTOSIZE);
 
 }
 
@@ -45,8 +47,14 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);  // Kinda like PCL library
     cv::Mat raw_img = cv_ptr->image;
     cv::Mat bin_img;
-    segmentImage(raw_img, bin_img);
-    cv::imshow("Binary", bin_img);
+    cv::Mat red_img;
+    segmentImage(raw_img, bin_img, red_img);
+    
+    cv::imshow("Tape Image", bin_img);
+    cv::waitKey(1);
+
+    segmentImage(raw_img, bin_img, red_img);
+    cv::imshow("Red Image", red_img);
     cv::waitKey(1);
 
     // Create pinhole camera model instance and load
@@ -95,8 +103,6 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     passthrough_filter.setFilterFieldName("z"); 
     passthrough_filter.setFilterLimits(cfg_.cam_z_min, cfg_.cam_z_max);
     passthrough_filter.filter(*bin_cloud_filtered);  
- 
-    //std::cout << bin_cloud_filtered->size() << std::endl;
 
     // Clustering used to fit curve later (see kd_tree)
 
@@ -106,6 +112,59 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     cam_cloud_msg.header.frame_id = "camera";
     cam_cloud_msg.header.stamp = msg->header.stamp;
     pub_cam_cloud_.publish(cam_cloud_msg);
+
+    /*
+      Stop sign cloud
+    */
+    // Project points from 2D pixel coordinates into 3D where it intersects
+    // the ground plane, and put them in a PCL point cloud
+    pcl::PointCloud<pcl::PointXYZ>::Ptr stop_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr stop_cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+
+    // Project every fourth row of the image to save some computational resources
+    for (int i = 0; i < red_img.rows; i += 4) {
+      for (int j = 0; j < red_img.cols; j++) {  // Side to side more important, so hit every col
+        if (red_img.at<uint8_t>(i, j) == 255) {
+          // We found a white pixel corresponding to a lane marking. Project to ground
+          // and add to point cloud
+          pcl::PointXYZ proj_p = projectPoint(model, cv::Point(j, i)); // cv::Point x and y so col, row (compare with line 69)
+          stop_cloud->points.push_back(proj_p);
+        }
+      }
+    }
+
+    pcl::PassThrough<pcl::PointXYZ> stop_passthrough_filter; // Instantiate filter. Will find x, y, z points that will satisfy ROI
+    pcl::IndicesPtr stop_roi_indices(new std::vector <int>);
+
+    // Put pointer to input cloud in passthrough filter
+    stop_passthrough_filter.setInputCloud(stop_cloud);
+
+    // Index is relative to the Lidar frame
+    // Extract X points
+    stop_passthrough_filter.setFilterFieldName("x"); // 3 fields, hence PointXYZI
+    stop_passthrough_filter.setFilterLimits(cfg_.cam_x_min, cfg_.cam_x_max);
+    stop_passthrough_filter.filter(*stop_roi_indices);    // Referes to input cloud
+
+    // Extract Y points
+    stop_passthrough_filter.setIndices(stop_roi_indices);
+    stop_passthrough_filter.setFilterFieldName("y"); 
+    stop_passthrough_filter.setFilterLimits(cfg_.cam_y_min, cfg_.cam_y_max);
+    stop_passthrough_filter.filter(*stop_roi_indices);  
+
+    // Extract Y points
+    stop_passthrough_filter.setIndices(stop_roi_indices);
+    stop_passthrough_filter.setFilterFieldName("z"); 
+    stop_passthrough_filter.setFilterLimits(cfg_.cam_z_min, cfg_.cam_z_max);
+    stop_passthrough_filter.filter(*stop_cloud_filtered);  
+
+    // Clustering used to fit curve later (see kd_tree)
+
+    // Publish point cloud to visualize in Rviz
+    sensor_msgs::PointCloud2 stop_cloud_msg;
+    pcl::toROSMsg(*stop_cloud_filtered, stop_cloud_msg);
+    stop_cloud_msg.header.frame_id = "camera";
+    stop_cloud_msg.header.stamp = msg->header.stamp;
+    pub_stop_cloud_.publish(stop_cloud_msg);    
 
   }
 
@@ -137,11 +196,11 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     point.y = vehicle_frame_point.y() + cfg_.cam_frame_y;
     //point.x = vehicle_frame_point.y() + cfg_.cam_frame_y;
     //point.y = vehicle_frame_point.y() + cfg_.cam_frame_y;
-    point.z = vehicle_frame_point.z();
+    point.z = vehicle_frame_point.z() + cfg_.cam_frame_z;
     return point;
   }
 
-  void CameraVision::segmentImage(const cv::Mat& raw_img, cv::Mat& bin_img)
+  void CameraVision::segmentImage(const cv::Mat& raw_img, cv::Mat& bin_img, cv::Mat& red_img)
   {
     // Convert to HSV colorspace
     cv::Mat raw_hsv;
@@ -158,9 +217,55 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     // Detect white lane marking pixels in the image
     cv::Mat white_bin_img = cv::Mat::zeros(raw_hsv.size(), CV_8U); // Have to initialize to 0's
     detectTape(hue_img, sat_img, val_img, white_bin_img);
-
     bin_img = white_bin_img;
+
+    // Detect red pixels in the image
+    cv::Mat red_bin_img = cv::Mat::zeros(raw_hsv.size(), CV_8U); // Have to initialize to 0's
+    detectStop(hue_img, sat_img, val_img, red_bin_img);        
+    red_img = red_bin_img;
     
+  }
+  void CameraVision::detectStop(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& red_bin_img)
+  {
+    // Apply threshold to generate a binary value image. White lines have
+    // higher value than the road
+    cv::Mat val_thres;
+    cv::threshold(val_img, val_thres, cfg_.red_val_thres, 255, cv::THRESH_BINARY);
+
+    // Apply inverse threshold to generate a binary saturation image. We want
+    // to throw out high saturation pixels because white has very low saturation
+    cv::Mat sat_thres;
+    cv::threshold(sat_img, sat_thres, cfg_.red_sat_thres, 255, cv::THRESH_BINARY_INV); // Low saturation
+
+    // Threshold hue
+    cv::Mat t1;
+    cv::Mat t2;
+    cv::Mat hue_thres;
+    int h_pos_edge = cfg_.red_h_center + cfg_.red_h_width; // Upper edge of hue window
+    int h_neg_edge = cfg_.red_h_center - cfg_.red_h_width; // Lower edge of hue window
+    if (h_pos_edge > 180) {
+      // Apply thresholds when upper edge overflows 180
+      cv::threshold(hue_img, t1, h_pos_edge - 180, 255, cv::THRESH_BINARY_INV);  
+      cv::threshold(hue_img, t2, cfg_.red_h_center - cfg_.red_h_width, 255, cv::THRESH_BINARY);  
+      cv::bitwise_or(t1, t2, hue_thres);
+    } else if (h_neg_edge < 0) {
+      // Apply thresholds when lower edge underflows 0
+      cv::threshold(hue_img, t1, h_neg_edge + 180, 255, cv::THRESH_BINARY);  
+      cv::threshold(hue_img, t2, cfg_.red_h_center + cfg_.red_h_width, 255, cv::THRESH_BINARY_INV);  
+      cv::bitwise_or(t1, t2, hue_thres);
+    } else {
+      // Apply thresholds when hue window is continuous
+      cv::threshold(hue_img, t1, cfg_.red_h_center - cfg_.red_h_width, 255, cv::THRESH_BINARY);
+      cv::threshold(hue_img, t2, cfg_.red_h_center + cfg_.red_h_width, 255, cv::THRESH_BINARY_INV);
+      cv::bitwise_and(t1, t2, hue_thres);
+    }
+
+    // Apply bitwise AND to make sure only pixels that satisfy both value and saturation
+    // thresholds make it out. Store result in ouput (white_bin_img)
+    cv::Mat temp_img;
+    cv::bitwise_and(val_thres, sat_thres, temp_img);
+    cv::bitwise_and(hue_thres, temp_img, red_bin_img);
+
   }
 
   void CameraVision::detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img)

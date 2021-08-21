@@ -171,11 +171,6 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
     transformStamped.transform.rotation.y = quat.y();
     transformStamped.transform.rotation.z = quat.z();
     transformStamped.transform.rotation.w = quat.w();
-    /*transformStamped.transform.rotation.x = 0;
-    transformStamped.transform.rotation.y = 0;
-    transformStamped.transform.rotation.z = 0;
-    transformStamped.transform.rotation.w = 1;*/
-
 
     br.sendTransform(transformStamped);  
     push_ = push_ + cfg_.tf_increment;
