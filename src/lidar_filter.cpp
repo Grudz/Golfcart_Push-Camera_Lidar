@@ -158,17 +158,24 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
 
     static tf2_ros::TransformBroadcaster br;
     geometry_msgs::TransformStamped transformStamped;
-  
+      
     transformStamped.header.stamp = ros::Time::now();
     transformStamped.header.frame_id = "map";
-    transformStamped.child_frame_id = "base_link";
-    transformStamped.transform.translation.x = 0.0;
-    transformStamped.transform.translation.y = push_;
+    transformStamped.child_frame_id = "base_footprint";
+    transformStamped.transform.translation.x = -push_;
+    transformStamped.transform.translation.y = 0.0;
     transformStamped.transform.translation.z = 0.0;
-    transformStamped.transform.rotation.x = 0;
+    tf2::Quaternion quat;
+    quat.setRPY(0, 0, -1.5);
+    transformStamped.transform.rotation.x = quat.x();
+    transformStamped.transform.rotation.y = quat.y();
+    transformStamped.transform.rotation.z = quat.z();
+    transformStamped.transform.rotation.w = quat.w();
+    /*transformStamped.transform.rotation.x = 0;
     transformStamped.transform.rotation.y = 0;
     transformStamped.transform.rotation.z = 0;
-    transformStamped.transform.rotation.w = 1;
+    transformStamped.transform.rotation.w = 1;*/
+
 
     br.sendTransform(transformStamped);  
     push_ = push_ + cfg_.tf_increment;

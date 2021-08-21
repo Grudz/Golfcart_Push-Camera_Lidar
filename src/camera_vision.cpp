@@ -31,7 +31,7 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     // because otherwise there is no point in detecting a lane!
     if (!looked_up_camera_transform_) {
       try {                                           // Forward Transform      FROM              TO
-        geometry_msgs::TransformStamped transform = buffer_.lookupTransform("map", "camera", msg->header.stamp);
+        geometry_msgs::TransformStamped transform = buffer_.lookupTransform("base_footprint", "camera", msg->header.stamp);
         tf2::convert(transform.transform, camera_transform_);
         looked_up_camera_transform_ = true; // Once the lookup is successful, there is no need to keep doing the lookup
                                             // because the transform is constant
@@ -121,7 +121,7 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     // Represent camera frame ray in footprint frame -> Slide 18 equation
     // getRotation returns quat but getBasis returns tf type
     tf2::Vector3 footprint_frame_ray = camera_transform_.getBasis() * tf2::Vector3(cam_frame_ray.x, cam_frame_ray.y, cam_frame_ray.z);
-    //tf2::Vector3 footprint_frame_ray = camera_transform_.getBasis() * tf2::Vector3(cfg_.cam_frame_x, cfg_.cam_frame_y, cam_frame_ray.z);
+    //tf2::Vector3 footprint_frame_ray = camera_transform_.getBasis() * tf2::Vector3(cfg_.cam_frame_y, cfg_.cam_frame_x, cam_frame_ray.z);
 
     // Using the concept of similar triangles, scale the unit vector such that the end is on the ground plane.
     //double s = -camera_transform_.getOrigin().z() / footprint_frame_ray.z(); // Slide 19 equation
@@ -135,6 +135,8 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     pcl::PointXYZ point;
     point.x = vehicle_frame_point.x() + cfg_.cam_frame_x;
     point.y = vehicle_frame_point.y() + cfg_.cam_frame_y;
+    //point.x = vehicle_frame_point.y() + cfg_.cam_frame_y;
+    //point.y = vehicle_frame_point.y() + cfg_.cam_frame_y;
     point.z = vehicle_frame_point.z();
     return point;
   }

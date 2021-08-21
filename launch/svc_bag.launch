@@ -4,9 +4,9 @@
   <!-- Get time reference from clock topic from bag file -->
   <param name="use_sim_time" value="true" />  
 
-  <!-- Get a tf frame to make rviz happy (add base_link) -->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="velodyne_broadcaster" args="0 -0.25 2.1 0 0 0.25 map velodyne" />
-  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="0 -0.25 2.1 0 0 0.0 map camera" /> 
+  <!-- Setup tf frames to make rviz happy  -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="velodyne_broadcaster" args="0 0 2.1 0 0 0.25 base_footprint velodyne" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="0 0 2.1 0 0 0 base_footprint camera" />
 
   <!-- Run lidar_filter node -->
   <node pkg="golfcart_push" type="lidar_filter" name="lidar_filter" output="screen" >
@@ -17,6 +17,9 @@
   <node pkg="golfcart_push" type="camera_vision" name="camera_vision" output="screen" >
     <remap from="input_images" to="/front_camera/image_rect_color" /> <!-- /front_camera/image_raw -->
   </node>
+  
+  <!-- Get robot model -->
+  <include file="$(find golfcart_push)/launch/r3d3_model.launch" />
 
   <!-- Rviz config -->
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find golfcart_push)/rviz/svc.rviz"/>

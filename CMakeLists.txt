@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   avs_lecture_msgs
 )
 find_package(OpenCV REQUIRED)
+# System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS system)
 
 add_compile_options(-std=c++17)
 
@@ -68,5 +70,17 @@ add_dependencies(camera_vision
 target_link_libraries(camera_vision
   ${catkin_LIBRARIES}
 )
+
+add_executable(r3d3_joint_pub
+  src/main_r3d3_joint_pub.cpp
+  src/r3d3JointPub.cpp
+)
+add_dependencies(r3d3_joint_pub
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(r3d3_joint_pub
+  ${catkin_LIBRARIES}
+)
+
 
 

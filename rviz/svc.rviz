@@ -35,33 +35,19 @@ Visualization Manager:
   Class: ""
   Displays:
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_link:
-          Value: true
-        camera:
-          Value: true
-        map:
-          Value: true
-        velodyne:
-          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        base_link:
-          {}
-        map:
-          camera:
-            {}
-          velodyne:
-            {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Alpha: 0.5
       Cell Size: 1
       Class: rviz/Grid
@@ -83,8 +69,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 17.223594665527344
-        Min Value: -0.4771571159362793
+        Max Value: 18.0596923828125
+        Min Value: -0.3645615577697754
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -113,8 +99,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.20005548000335693
-        Min Value: 0.16567933559417725
+        Max Value: 1.2829337120056152
+        Min Value: 1.2829337120056152
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -122,7 +108,7 @@ Visualization Manager:
       Color: 114; 159; 207
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 3
@@ -139,7 +125,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/Image
       Enabled: true
       Image Topic: /front_camera/image_rect_color
@@ -195,11 +181,126 @@ Visualization Manager:
       show coords: false
       show speed: false
       word size: 0.6000000238418579
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        body:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        body_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_joint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_pole1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_pole2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        eye:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fl_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fr_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_caster_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        lidar_pad:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_caster_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rl_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rr_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        sensor_pad:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -223,25 +324,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 13.672516822814941
+      Distance: 10.494034767150879
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.8864495754241943
-        Y: -1.1202248334884644
-        Z: 2.3367574214935303
+        X: -0.6311690807342529
+        Y: -0.9785429239273071
+        Z: 3.3568334579467773
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5747987031936646
+      Pitch: 0.3647990822792053
       Target Frame: map
       Value: Orbit (rviz)
-      Yaw: 0.93351811170578
+      Yaw: 5.961694717407227
     Saved: ~
 Window Geometry:
   Displays:

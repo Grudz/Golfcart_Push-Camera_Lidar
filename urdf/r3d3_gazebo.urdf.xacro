@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<robot name="r3d3_gazebo" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+  <gazebo> <!-- Turn this off to practice your own localization algo -->
+    <plugin name="pose_plugin" filename="libpose_plugin.so"> <!-- Take info from gazebo to output topics (not real irl) -->
+      <pub_tf>1</pub_tf>
+      <tf_prefix>r3d3</tf_prefix> <!-- robot description in rviz name -->
+    </plugin>
+  </gazebo>
+  
+  <gazebo reference="left_wheel" >
+    <mu1>3.0</mu1>
+    <mu2>3.0</mu2>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+  
+  <gazebo reference="right_wheel" >
+    <mu1>3.0</mu1>
+    <mu2>3.0</mu2>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+  
+  <gazebo reference="fl_caster" >
+    <mu1>0</mu1>
+    <mu2>0</mu2>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+ 
+  <gazebo reference="fr_caster" >
+    <mu1>0</mu1>
+    <mu2>0</mu2>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+  
+  <gazebo reference="rl_caster" >
+    <mu1>0</mu1>
+    <mu2>0</mu2>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+ 
+  <gazebo reference="rr_caster" >
+    <mu1>0</mu1>
+    <mu2>0</mu2>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+  
+
+  
+<!-- R3D3 colors -->
+
+  <gazebo reference="camera_pole1" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="camera_pole2" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="camera_joint" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="lidar_pad" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="body" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="head" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="left_caster_leg" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="right_caster_leg" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="right_leg" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/White</material>
+  </gazebo>
+
+
+  <gazebo reference="left_leg" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="eye" >
+    <mu1>1.0 </mu1>
+    <mu2>1.0 </mu2>
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+
+</robot>
+  
+ 

@@ -1,0 +1,298 @@
+<?xml version="1.0"?>
+<robot name="r3d3_visual" xmlns:xacro="http://www.ros.org/wiki/xacro" > <!-- Needed to read urdf as xacro (This is like a C++ Structure) -->
+
+  <xacro:property name="front_caster_x" value="0.3" />
+  <xacro:property name="front_caster_y" value="0.2" />
+  <xacro:property name="rear_caster_x" value="-0.3" />
+  <xacro:property name="rear_caster_y" value="0.2" />
+  <xacro:property name="frame_height" value="0.18" />
+  <xacro:property name="wheel_radius" value="0.165" />
+  <xacro:property name="caster_radius" value="0.08" />
+  <xacro:property name="drive_wheel_offset" value="0.29" /> <!-- can do math withen xacros -->
+
+  <xacro:macro name="drive_wheel" params="name y_offset" > <!-- y_offset = difference between the same wheel -->
+    <link name="${name}_wheel" > <!-- Allows us to access name variable -->
+      <visual>
+        <geometry>
+          <cylinder length="0.05" radius="${wheel_radius}"/>
+        </geometry>
+        <material name="dark_gray"/> <!-- Can't take multiple colors so first one is took -->
+      </visual>
+      <visual>
+        <geometry>
+          <box size="0.02 0.1 0.07"/>
+        </geometry>
+        <material name="red"/>
+      </visual>
+      <visual>
+        <geometry>
+          <box size="0.01 0.2 0.07"/>
+        </geometry>
+        <material name="red"/>
+      </visual>
+    </link>
+
+    <joint name="${name}_wheel_joint" type="continuous" > <!-- note continuous here -->
+      <parent link="body_link" />
+      <child link="${name}_wheel" />
+      <origin xyz="0 ${y_offset} 0" rpy="-1.5707 0 0" />
+      <axis xyz="0 0 1" />
+      <limit effort="1000.0" velocity="50.0" />
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="caster_wheel" params="name x_offset y_offset" > <!-- stupid training wheels -->
+    <link name="${name}_caster" >
+      <visual>
+        <geometry>
+          <cylinder length="0.05" radius="${caster_radius}"/>
+        </geometry>
+        <material name="dark_gray"/>
+      </visual>
+    </link>
+
+    <joint name="${name}_caster_joint" type="fixed" >
+      <parent link="body_link" />
+      <child link="${name}_caster" />
+      <origin xyz="${x_offset} ${y_offset} ${-(wheel_radius-caster_radius)}" rpy="-1.5707 0 0" /> <!-- 0 offset = caster wheels above ground -->
+    </joint>
+  </xacro:macro>
+
+  <xacro:drive_wheel name="left" y_offset="${drive_wheel_offset}" />
+  <xacro:drive_wheel name="right" y_offset="${-drive_wheel_offset}" />
+  <xacro:caster_wheel name="fl" x_offset="${front_caster_x}" y_offset="${front_caster_y}" />
+  <xacro:caster_wheel name="fr" x_offset="${front_caster_x}" y_offset="${-front_caster_y}" />
+  <xacro:caster_wheel name="rl" x_offset="${rear_caster_x}" y_offset="${rear_caster_y}" />
+  <xacro:caster_wheel name="rr" x_offset="${rear_caster_x}" y_offset="${-rear_caster_y}" />
+
+  <link name="base_footprint" > <!-- no physical component IRL, this is center of robot, first thing you do -->
+  </link>
+
+  <link name="body_link" >
+
+    <inertial>
+      <mass value="100" />
+      <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0" /> <!-- Note location of this -->
+    </inertial>
+ 
+    <visual>
+      <origin xyz="0 0 ${frame_height}" rpy="0 0 0" />   
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>    
+    </visual>
+  </link>
+
+  <joint name="base_joint" type="fixed" > <!-- Fixed so they stay connected together -->
+    <parent link="base_footprint" />
+    <child link="body_link" />
+    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 -1.58" /> <!-- Original 0, 0, 0 -->
+  </joint>
+
+  <material name="gray" >
+    <color rgba="0.4 0.4 0.4 1.0" />
+  </material>
+
+  <material name="dark_gray" >
+    <color rgba="0.1 0.1 0.1 1.0" />
+  </material>
+  
+  <material name="red" >
+    <color rgba="1 0 0 1.0" />
+  </material>
+
+<!-- R3D3 Visuals -->
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+
+  <link name="camera_pole1">
+    <visual>
+      <geometry>
+        <cylinder length="0.6" radius="0.02"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="head_to_camera_pole" type="fixed">
+    <parent link="head"/>
+    <child link="camera_pole1"/>
+    <origin xyz="0 0 0.22" rpy="0 0 0" />
+  </joint>
+
+  <link name="camera_pole2">
+    <visual>
+      <geometry>
+        <cylinder length="0.8" radius="0.02"/> <!-- 0.3 0.02 -->
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="camera1_to_camera2_pole" type="fixed">
+    <parent link="camera_pole1"/>
+    <child link="camera_pole2"/>
+    <origin xyz="0.0 0 0.6" rpy="0 0 0" /> <!-- 0, 0.5, 0 -->
+  </joint>
+
+  <link name="camera_joint">
+    <visual>
+      <geometry>
+        <sphere radius="0.03"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="camera1_to_camera2_joint" type="fixed">
+    <parent link="camera_pole1"/>
+    <child link="camera_joint"/>
+    <origin xyz="0 0 0.3" rpy="0 0 0" />
+  </joint>
+
+  <link name="lidar_pad">
+    <visual>
+      <geometry>
+        <cylinder length="0.02" radius="0.16"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_lidar_pad" type="fixed">
+    <parent link="body_link"/>
+    <child link="lidar_pad"/>
+    <origin xyz="0.16 0 0.17" rpy="0 0 0" />
+  </joint>
+
+  <link name="sensor_pad">
+    <visual>
+      <geometry>
+        <cylinder length="0.08" radius="0.08"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_sensor_pad" type="fixed">
+    <parent link="body_link"/>
+    <child link="sensor_pad"/>
+    <origin xyz="0 0 1.9" rpy="0 0 0" />
+  </joint>    
+
+  <link name="head">
+    <visual>
+      <geometry>
+        <sphere radius="0.2225"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="head" type="fixed">
+    <parent link="body_link"/>
+    <child link="head"/>
+    <origin xyz="0 0 0.68" rpy="0 0 0" />
+  </joint>
+
+  <link name="body">
+    <visual>
+      <geometry>
+        <cylinder length="0.68" radius="0.2175"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_body" type="fixed">
+    <parent link="body_link"/>
+    <child link="body"/>
+    <origin xyz="0 0 0.35" rpy="0 0 0" />
+  </joint>
+
+  <link name="right_caster_leg">
+    <visual>
+      <geometry>
+        <box size="0.75 0.1 0.1"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_right_caster_leg" type="fixed">
+    <parent link="body_link"/>
+    <child link="right_caster_leg"/>
+    <origin xyz="0 0.2 0.05" rpy="0 0 0" />
+  </joint>
+
+  <link name="left_caster_leg">
+    <visual>
+      <geometry>
+        <box size="0.75 0.1 0.1"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_left_caster_leg" type="fixed">
+    <parent link="body_link"/>
+    <child link="left_caster_leg"/>
+    <origin xyz="0 -0.2 0.05" rpy="0 0 0" />
+  </joint>
+
+  <link name="right_leg">
+    <visual>
+      <geometry>
+        <box size="0.25 0.1 0.6"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_right_leg" type="fixed">
+    <parent link="body_link"/>
+    <child link="right_leg"/>
+    <origin xyz="0 0.2 0.35" rpy="0 0 0" />
+  </joint>
+
+  <link name="left_leg">
+    <visual>
+      <geometry>
+        <box size="0.25 0.1 0.6"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_left_leg" type="fixed">
+    <parent link="body_link"/>
+    <child link="left_leg"/>
+    <origin xyz="0 -0.2 0.35" rpy="0 0 0" />
+  </joint>
+
+  <link name="eye">
+    <visual>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="head_to_eye" type="fixed">
+    <parent link="head"/>
+    <child link="eye"/>
+    <origin xyz="0.16 0 0.13" rpy="0 0 0" />
+  </joint>
+
+</robot>
