@@ -9,21 +9,25 @@
 // Namespace matches ROS package name
 namespace golfcart_push{
 
-class r3d3JointPub
-{
+  class r3d3JointPub
+  {
 
-public:
-  r3d3JointPub(ros::NodeHandle n, ros::NodeHandle pn);
-  
-private: 
-  ros::Publisher pub_joint_state;
-  ros::Timer timer;
-  sensor_msgs::JointState joint_state_msg;
-  double joint_angle;
-  void timerCallback(const ros::TimerEvent& event);
-};
+    public:
+      r3d3JointPub(ros::NodeHandle n, ros::NodeHandle pn);
+      
+    private: 
 
-}
+      void timerCallback(const ros::TimerEvent& event);
+
+      ros::Publisher pub_joint_state;
+      ros::Timer timer;
+
+      sensor_msgs::JointState joint_state_msg;
+      double joint_angle;
+
+    };
+
+  }
 
 #endif // NODECLASS_H
 

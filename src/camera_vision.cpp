@@ -21,7 +21,7 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
 
   looked_up_camera_transform_ = false;
 
-  cv::namedWindow("Binary", cv::WINDOW_AUTOSIZE);
+  cv::namedWindow("Binary", cv::WINDOW_AUTOSIZE); // Setup window to view camera processing
 
 }
 
@@ -80,7 +80,7 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     // Put pointer to input cloud in passthrough filter
     passthrough_filter.setInputCloud(bin_cloud);
 
-    // Index is relative to the Lidar frame
+    // Index is relative to the Camera frame
     // Extract X points
     passthrough_filter.setFilterFieldName("x"); // 3 fields, hence PointXYZI
     passthrough_filter.setFilterLimits(cfg_.cam_x_min, cfg_.cam_x_max);
@@ -97,8 +97,6 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     passthrough_filter.setFilterFieldName("z"); 
     passthrough_filter.setFilterLimits(cfg_.cam_z_min, cfg_.cam_z_max);
     passthrough_filter.filter(*bin_cloud_filtered);  
- 
-    //std::cout << bin_cloud_filtered->size() << std::endl;
 
     // Publish point cloud to visualize in Rviz
     sensor_msgs::PointCloud2 cam_cloud_msg;
@@ -122,8 +120,6 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     ec.setInputCloud(cam_cloud_filtered);
     ec.extract(cluster_indices);
 
-    //ROS_INFO("Camera Header = %s\n", cam_cloud_filtered->header.frame_id.c_str());
-
     // Use indices arrays to separate point cloud into individual clouds for each cluster
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cluster_clouds;
     for (auto indices : cluster_indices) {
@@ -132,10 +128,8 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
       cluster->width = cluster->points.size();
       cluster->height = 1;
       cluster->is_dense = true;
-      //ROS_INFO("Camera Header = %s\n", cluster->header.frame_id.c_str());
       cluster_clouds.push_back(cluster);
     }
-    
 
     // Construct polynomial curve fits to each cluster cloud
     std::vector<CurveFit> curves;
@@ -157,8 +151,6 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     
     // Use max and min of each cluster to create bbox
     pcl::PointXYZ min, max;  
-    //ROS_INFO("\n----- Loop Start -----\n");
-    //ROS_INFO("Clusters in scan = %d\n", (int)cluster_clouds.size());  // Is this so bad? Draw a new box for each new sequence?
 
     // Copy header from passthrough cloud and clear array
     bbox_cam_array_.header = pcl_conversions::fromPCL(cam_cloud_filtered->header); // Nice way to get entire header easily
@@ -170,9 +162,6 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
       
       // Applying the min/max function
       pcl::getMinMax3D(*cluster, min, max);  // Get min/max 3D
-      //ROS_INFO("Camera - Header seq per cluster = %d\n", (int)cluster->header.seq);
-
-      //ROS_INFO("Cluster Header = %s\n", cluster->header.frame_id.c_str());
 
       // Create bbox message, fill in fields, push it into bbox array
       avs_lecture_msgs::TrackedObject bbox;  // rosmsg show TrackedObjectArray
@@ -348,16 +337,12 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
   pcl::PointXYZ CameraVision::projectPoint(const image_geometry::PinholeCameraModel& model, const cv::Point2d& p)
   {
     // Convert the input pixel coordinates into a 3d ray, where x and y are projected to the point where z is equal to 1.0
-    cv::Point3d cam_frame_ray = model.projectPixelTo3dRay(p);
-    //std::cout << "x " << cam_frame_ray.x << std::endl;
-    //std::cout << "y " << cam_frame_ray.y << std::endl;
-    //std::cout << "z " << cam_frame_ray.z << std::endl; // Z = 1
+    cv::Point3d cam_frame_ray = model.projectPixelTo3dRay(p); // Z = 1
 
     // Represent camera frame ray in footprint frame -> Slide 18 equation
     // getRotation returns quat but getBasis returns tf type
     tf2::Vector3 footprint_frame_ray = camera_transform_.getBasis() * tf2::Vector3(cam_frame_ray.x, cam_frame_ray.y, cam_frame_ray.z);
-    //tf2::Vector3 footprint_frame_ray = camera_transform_.getBasis() * tf2::Vector3(cfg_.cam_frame_y, cfg_.cam_frame_x, cam_frame_ray.z);
-
+  
     // Using the concept of similar triangles, scale the unit vector such that the end is on the ground plane.
     //double s = -camera_transform_.getOrigin().z() / footprint_frame_ray.z(); // Slide 19 equation
     //tf2::Vector3 ground_plane_ray = s * footprint_frame_ray;
@@ -370,8 +355,6 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     pcl::PointXYZ point;
     point.x = vehicle_frame_point.x() + cfg_.cam_frame_x;
     point.y = vehicle_frame_point.y() + cfg_.cam_frame_y;
-    //point.x = vehicle_frame_point.y() + cfg_.cam_frame_y;
-    //point.y = vehicle_frame_point.y() + cfg_.cam_frame_y;
     point.z = vehicle_frame_point.z();
     return point;
   }
@@ -395,7 +378,6 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
     detectTape(hue_img, sat_img, val_img, white_bin_img);
 
     bin_img = white_bin_img;
-    
   }
 
   void CameraVision::detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img)

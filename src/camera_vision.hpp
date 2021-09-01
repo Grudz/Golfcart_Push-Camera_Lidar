@@ -73,19 +73,22 @@ namespace golfcart_push {
       CameraVision(ros::NodeHandle n, ros::NodeHandle pn);
       
     private:
-    
-      void timerCallback(const ros::TimerEvent& event);
+      
+      void timerCallback(const ros::TimerEvent& event); // Use later maybe
       void reconfig(GolfcartPushConfig& config, uint32_t level);
       void recvImage(const sensor_msgs::ImageConstPtr& msg); 
-      void segmentImage(const cv::Mat& raw_img, cv::Mat& bin_img); 
-      void detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img);
+      void segmentImage(const cv::Mat& raw_img, cv::Mat& bin_img); // Get HSV out of image
+      void detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img); // Filter image using HSV to get tape
       void recvCameraInfo(const sensor_msgs::CameraInfoConstPtr& msg);
-      pcl::PointXYZ projectPoint(const image_geometry::PinholeCameraModel& model, const cv::Point2d& p);
-      void publishMarkers(const std::vector<CurveFit>& curves);
+      pcl::PointXYZ projectPoint(const image_geometry::PinholeCameraModel& model, const cv::Point2d& p); // Create PCL point
+      
+      // Create line to fit to camera PCL points
+      void publishMarkers(const std::vector<CurveFit>& curves); 
       void visualizePoints(const CurveFit& curve, std::vector<geometry_msgs::Point>& points);
       bool checkCurve(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const CurveFit& curve);
       bool fitPoints(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, int order, CurveFit& curve);
 
+      // Reconfigure setup
       dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
       GolfcartPushConfig cfg_;
       
@@ -93,15 +96,17 @@ namespace golfcart_push {
 
       ros::Publisher pub_cam_cloud_;
       ros::Publisher pub_markers_;
+      ros::Publisher pub_cam_bbox_;
       ros::Subscriber sub_camera_;
       ros::Subscriber sub_cam_info_;
       sensor_msgs::CameraInfo camera_info_;
-      tf2::Transform camera_transform_; // Coordinate transformation from footprint to camera
+
+      // Camera transform variables
+      tf2::Transform camera_transform_; // Coordinate transformation from base_footprint to camera
       bool looked_up_camera_transform_;
       tf2_ros::TransformListener listener_;
       tf2_ros::Buffer buffer_;  
 
-      ros::Publisher pub_cam_bbox_;
 
       // Publishing bounding box message
       avs_lecture_msgs::TrackedObjectArray bbox_cam_array_;
