@@ -1,7 +1,7 @@
 # Golfcart Push
 ##### Author: Ben Grudzien
 
-I took a bag file of an autonomus golf cart, then used class examples to piece together a cool project. It demonstrates lidar and camera processing in ROS using OpenCV and the PCL library. 
+**I took a bag file of an autonomus golf cart, then used class examples to piece together a cool project.** It demonstrates lidar and camera processing in ROS using OpenCV and the PCL library. 
 
 + The lidar uses intensity of points to place bounding boxes on the sign posts. 
 
@@ -25,7 +25,7 @@ roslaunch golfcart_push svc_bag.launch
 ```
 rosbag play --clock moving-002.bag -l
 ```
-![](doc/golfcart_push_final.png.png)
+![](doc/golfcart_push_final.png)
 
 + Run this to see the R3D3 in rviz
 
