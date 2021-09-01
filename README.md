@@ -5,7 +5,7 @@
 
 + The lidar uses intensity of points to place bounding boxes on the sign posts. 
 
-+The camera is used to track the line of tape on the ground. The camera image is processed to get 3D information and place PCL points on the tape. Then a line is fit is projected to fit those points
++ The camera is used to track the line of tape on the ground. The camera image is processed to get 3D information and place PCL points on the tape. Then a line is fit is projected to fit those points
 
 + Oh and also I added the iconic R3D3 (upgrade from R2D2) to this project :)
 
