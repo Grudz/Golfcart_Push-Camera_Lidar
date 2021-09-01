@@ -6,10 +6,12 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
   listener_(buffer_), 
   kd_tree_(new pcl::search::KdTree<pcl::PointXYZ>)
 {
-  // Pointcloud subscriber
+  // Pubs and subs
   sub_camera_ = n.subscribe("input_images", 1, &CameraVision::recvImage, this);
   sub_cam_info_ = n.subscribe("/front_camera/camera_info", 1, &CameraVision::recvCameraInfo, this); // Message with intrinsic properties
   pub_cam_cloud_ = n.advertise<sensor_msgs::PointCloud2>("cam_cloud", 1);
+  pub_markers_ = n.advertise<visualization_msgs::MarkerArray>("projected_lines", 1);
+  pub_cam_bbox_= n.advertise<avs_lecture_msgs::TrackedObjectArray>("cam_bounding_boxes", 1);
 
   // This timer just refreshes the output displays to always reflect the current threshold settings
   timer_ = n.createTimer(ros::Duration(0.05), &CameraVision::timerCallback, this);
@@ -26,7 +28,7 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
   // Passthrough filter function
   void CameraVision::recvImage(const sensor_msgs::ImageConstPtr& msg)
   {
-
+    
     // Do nothing until the coordinate transform from footprint to camera is valid,
     // because otherwise there is no point in detecting a lane!
     if (!looked_up_camera_transform_) {
@@ -98,15 +100,248 @@ CameraVision::CameraVision(ros::NodeHandle n, ros::NodeHandle pn):
  
     //std::cout << bin_cloud_filtered->size() << std::endl;
 
-    // Clustering used to fit curve later (see kd_tree)
-
     // Publish point cloud to visualize in Rviz
     sensor_msgs::PointCloud2 cam_cloud_msg;
     pcl::toROSMsg(*bin_cloud_filtered, cam_cloud_msg);
     cam_cloud_msg.header.frame_id = "camera";
     cam_cloud_msg.header.stamp = msg->header.stamp;
+    cam_cloud_msg.header.seq = msg->header.seq;
     pub_cam_cloud_.publish(cam_cloud_msg);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cam_cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(cam_cloud_msg, *cam_cloud_filtered);
 
+    // Use Euclidean clustering to group dashed lines together
+    // and separate each distinct line into separate point clouds
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    ec.setClusterTolerance(cfg_.cam_cluster_tol);
+    ec.setMinClusterSize(cfg_.cam_min_cluster_size);
+    ec.setMaxClusterSize(cfg_.cam_max_cluster_size);
+    kd_tree_->setInputCloud(cam_cloud_filtered);
+    ec.setSearchMethod(kd_tree_);
+    ec.setInputCloud(cam_cloud_filtered);
+    ec.extract(cluster_indices);
+
+    //ROS_INFO("Camera Header = %s\n", cam_cloud_filtered->header.frame_id.c_str());
+
+    // Use indices arrays to separate point cloud into individual clouds for each cluster
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cluster_clouds;
+    for (auto indices : cluster_indices) {
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::copyPointCloud(*cam_cloud_filtered, indices, *cluster);
+      cluster->width = cluster->points.size();
+      cluster->height = 1;
+      cluster->is_dense = true;
+      //ROS_INFO("Camera Header = %s\n", cluster->header.frame_id.c_str());
+      cluster_clouds.push_back(cluster);
+    }
+    
+
+    // Construct polynomial curve fits to each cluster cloud
+    std::vector<CurveFit> curves;
+    for (size_t i = 0; i < cluster_clouds.size(); i++) {
+      CurveFit new_curve;
+      bool successful_fit = fitPoints(cluster_clouds[i], cfg_.fit_order, new_curve);
+      if (!successful_fit) {
+        continue;
+      }
+
+      bool good_fit = checkCurve(cluster_clouds[i], new_curve);
+      if (good_fit) {
+        curves.push_back(new_curve);
+      }
+    }
+
+    // Construct Rviz marker output to visualize curve fit
+    publishMarkers(curves);
+    
+    // Use max and min of each cluster to create bbox
+    pcl::PointXYZ min, max;  
+    //ROS_INFO("\n----- Loop Start -----\n");
+    //ROS_INFO("Clusters in scan = %d\n", (int)cluster_clouds.size());  // Is this so bad? Draw a new box for each new sequence?
+
+    // Copy header from passthrough cloud and clear array
+    bbox_cam_array_.header = pcl_conversions::fromPCL(cam_cloud_filtered->header); // Nice way to get entire header easily
+    bbox_cam_array_.objects.clear();
+
+    // Loop through clusters and box up
+    for (auto& cluster : cluster_clouds) 
+    {  
+      
+      // Applying the min/max function
+      pcl::getMinMax3D(*cluster, min, max);  // Get min/max 3D
+      //ROS_INFO("Camera - Header seq per cluster = %d\n", (int)cluster->header.seq);
+
+      //ROS_INFO("Cluster Header = %s\n", cluster->header.frame_id.c_str());
+
+      // Create bbox message, fill in fields, push it into bbox array
+      avs_lecture_msgs::TrackedObject bbox;  // rosmsg show TrackedObjectArray
+      
+      bbox.header = bbox_cam_array_.header;
+      bbox.spawn_time.ros::Time::now(); // Spawn it right now
+      bbox.id = 2;
+      bbox.bounding_box_scale.x = max.x - min.x;
+      bbox.bounding_box_scale.y = max.y - min.y;
+      bbox.bounding_box_scale.z = 0.1;
+      bbox.pose.position.x = (max.x + min.x) / 2; 
+      bbox.pose.position.y = (max.y + min.y) / 2; 
+      bbox.pose.position.z = (max.z + min.z) / 2; 
+      bbox.pose.orientation.w = 1.0;   
+      bbox_cam_array_.objects.push_back(bbox);
+    } 
+    
+    pub_cam_bbox_.publish(bbox_cam_array_);
+
+  }
+
+  // This function inputs a PCL point cloud and applies a least squares curve fit
+  // to the points which fits an optimal polynomial curve of the desired order
+  bool CameraVision::fitPoints(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, int order, CurveFit& curve)
+  {
+    // Check if it is mathematically possible to fit a curve to the data
+    if (cloud->points.size() <= order) {
+      return false;
+    }
+
+    Eigen::MatrixXd regression_matrix(cloud->points.size(), order + 1);
+    Eigen::VectorXd y_samples(cloud->points.size());
+
+    // These initializers are important
+    curve.min_x = INFINITY;
+    curve.max_x = 0.0;
+    for (int i = 0; i < cloud->points.size(); i++) {
+      y_samples(i) = cloud->points[i].y;
+
+      // Fill in row of regression matrix
+      // [1, x, x^2, ..., x^N]
+      double tx = 1.0;
+      for (int j = 0; j <= order; j++) {
+        regression_matrix(i, j) = tx;
+        tx *= cloud->points[i].x;
+      }
+
+      // Compute the minimum value of x to constrain
+      // the polynomial curve
+      if (cloud->points[i].x < curve.min_x) {
+        curve.min_x = cloud->points[i].x;
+      }
+
+      // Compute the maximum value of x to constrain
+      // the polynomial curve
+      if (cloud->points[i].x > curve.max_x) {
+        curve.max_x = cloud->points[i].x;
+      }
+    }
+
+    // Invert regression matrix with left pseudoinverse operation - Slide 9
+    Eigen::MatrixXd pseudoinverse_matrix = (regression_matrix.transpose() * regression_matrix).inverse() * regression_matrix.transpose();
+
+    // Perform least squares estimation and obtain polynomial coefficients
+    Eigen::VectorXd curve_fit_coefficients = pseudoinverse_matrix * y_samples;
+
+    // Populate 'poly_coeff' field of the 'curve' argument output
+    for (int i = 0; i < curve_fit_coefficients.rows(); i++) {
+      curve.poly_coeff.push_back(curve_fit_coefficients(i)); // () not [] for eigen arrays
+    }
+
+    return true; // Successful curve fit!
+  }
+
+  bool CameraVision::checkCurve(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const CurveFit& curve)
+  {
+    // Compute error between each sample point y and the expected value of y
+    std::vector<double> error_samples;
+    for (size_t i = 0; i < cloud->points.size(); i++) {
+      double new_error;
+
+      // Compute expected y value based on the order of the curve
+      // y = a0 + a1 * x + a2 * x^2 + ... + aM * x^M
+      double y_hat = 0.0;
+      double t = 1.0;
+      for (size_t j = 0; j < curve.poly_coeff.size(); j++) {
+        // Add a term to y_hat for each coefficient in the polynomial
+        y_hat += t * curve.poly_coeff[j];
+        t *= cloud->points[i].x;
+      }
+      new_error = cloud->points[i].y - y_hat;
+      error_samples.push_back(new_error);
+    }
+
+    // Compute mean squared error
+    double mean_square = 0;
+    for (size_t i = 0; i < cloud->points.size(); i++) {
+      mean_square += error_samples[i] * error_samples[i];
+    }
+    mean_square /= (double)cloud->points.size();
+
+    // RMS value is the square root of the mean squared error
+    double rms = sqrt(mean_square);
+
+    // Return boolean indicating success or failure
+    return rms < cfg_.rms_tolerance;  // 1 if satisfied, 0 if not
+  }
+
+  void CameraVision::publishMarkers(const std::vector<CurveFit>& curves)
+  {
+    visualization_msgs::MarkerArray marker_msg;
+    visualization_msgs::Marker viz_marker;
+    viz_marker.header.frame_id = "base_footprint";
+    viz_marker.header.stamp = ros::Time::now();
+    viz_marker.action = visualization_msgs::Marker::ADD;
+    viz_marker.pose.orientation.w = 1;
+    viz_marker.id = 0;
+
+    // Use the LINE_STRIP type to display a line connecting each point
+    viz_marker.type = visualization_msgs::Marker::LINE_STRIP;
+
+    // Red
+    viz_marker.color.a = 1.0;
+    viz_marker.color.r = 0.0;
+    viz_marker.color.g = 1.0;
+    viz_marker.color.b = 0.0;
+
+    // 0.1 meters thick line
+    viz_marker.scale.x = 0.06;
+
+    // Sample polynomial and add line strip marker to array
+    // for each separate cluster
+    for (auto& curve : curves) {
+      visualizePoints(curve, viz_marker.points);
+      marker_msg.markers.push_back(viz_marker);
+      viz_marker.id++;
+    }
+
+    // Delete markers to avoid ghost markers from lingering if
+    // the number of markers being published changes
+    visualization_msgs::MarkerArray delete_markers;
+    delete_markers.markers.resize(1);
+    delete_markers.markers[0].action = visualization_msgs::Marker::DELETEALL;
+    pub_markers_.publish(delete_markers);
+
+    // Publish for visualization
+    pub_markers_.publish(marker_msg);
+  }
+
+  // This method samples a curve fit between its minimum and maximum valid values
+  // and outputs an array of geometry_msgs::Point to put into a Rviz marker message
+  void CameraVision::visualizePoints(const CurveFit& curve, std::vector<geometry_msgs::Point>& points)
+  {
+    points.clear();
+
+    // Sample points at 0.05 meter resolution
+    for (double x = curve.min_x; x <= curve.max_x; x += 0.05) {
+      geometry_msgs::Point p;
+      // Copy x value
+      p.x = x;
+
+      double t = 1.0;
+      for (size_t i = 0; i < curve.poly_coeff.size(); i++) {
+        p.y += curve.poly_coeff[i] * t;
+        t *= p.x;
+      }
+
+      points.push_back(p);
+    }
   }
 
   // Project 2D pixel point 'p' into vehicle's frame and return as 3D point

@@ -53,8 +53,19 @@ _)      \.___.,|     .'
 #include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
+#include <visualization_msgs/MarkerArray.h>
 
 namespace golfcart_push {
+
+  // Custom variable type
+  typedef struct {
+    // (float is 32bit while double is 64bit)
+    std::vector<double> poly_coeff; // Coefficients of the polynomial
+
+    // Because curve is neg infinity to pos infinity
+    double min_x; // Minimum x value where polynomial is defined
+    double max_x; // Maximum x value where polynomial is defined
+  } CurveFit;
 
   class CameraVision
   {
@@ -70,6 +81,10 @@ namespace golfcart_push {
       void detectTape(const cv::Mat& hue_img, const cv::Mat& sat_img, const cv::Mat& val_img, cv::Mat& white_bin_img);
       void recvCameraInfo(const sensor_msgs::CameraInfoConstPtr& msg);
       pcl::PointXYZ projectPoint(const image_geometry::PinholeCameraModel& model, const cv::Point2d& p);
+      void publishMarkers(const std::vector<CurveFit>& curves);
+      void visualizePoints(const CurveFit& curve, std::vector<geometry_msgs::Point>& points);
+      bool checkCurve(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const CurveFit& curve);
+      bool fitPoints(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, int order, CurveFit& curve);
 
       dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
       GolfcartPushConfig cfg_;
@@ -77,6 +92,7 @@ namespace golfcart_push {
       ros::Timer timer_;
 
       ros::Publisher pub_cam_cloud_;
+      ros::Publisher pub_markers_;
       ros::Subscriber sub_camera_;
       ros::Subscriber sub_cam_info_;
       sensor_msgs::CameraInfo camera_info_;
@@ -84,6 +100,11 @@ namespace golfcart_push {
       bool looked_up_camera_transform_;
       tf2_ros::TransformListener listener_;
       tf2_ros::Buffer buffer_;  
+
+      ros::Publisher pub_cam_bbox_;
+
+      // Publishing bounding box message
+      avs_lecture_msgs::TrackedObjectArray bbox_cam_array_;
 
       // KD search tree object for use by PCL functions
       pcl::search::Search<pcl::PointXYZ>::Ptr kd_tree_;

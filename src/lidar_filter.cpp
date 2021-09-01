@@ -26,7 +26,7 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
     //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_out(new pcl::PointCloud<pcl::PointXYZI>);
     //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(new pcl::PointCloud<pcl::PointXYZ>);
-
+    
     pcl::fromROSMsg(*msg, *cloud_in); 
 
     // Start filtering
@@ -87,6 +87,8 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
     ec.setInputCloud(cloud_out);
     ec.extract(cluster_indices);
 
+    //ROS_INFO("Lidar Header = %s\n", cloud_out->header.frame_id.c_str());
+
     // Use indices arrays to separate point cloud into individual clouds for each cluster
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cluster_clouds;
     for (auto indices : cluster_indices) 
@@ -96,8 +98,11 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
       cluster->width = cluster->points.size();
       cluster->height = 1;
       cluster->is_dense = true;
+      //ROS_INFO("Lidar Header = %s\n", cluster->header.frame_id.c_str());
       cluster_clouds.push_back(cluster);
     }
+
+    
 
     // Use max and min of each cluster to create bbox
     pcl::PointXYZ min, max;  // Relative to the Lidar
@@ -115,7 +120,8 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
       
       // Applying the min/max function
       pcl::getMinMax3D(*cluster, min, max);  // Get min/max 3D
-      //ROS_INFO("Header seq per cluster = %d\n", (int)cluster->header.seq);
+      //ROS_INFO("Lidar - Header seq per cluster = %d\n", (int)cluster->header.seq);
+      //ROS_INFO("Lidar Header = %s\n", cluster->header.frame_id.c_str());
 
       // Create bbox message, fill in fields, push it into bbox array
       avs_lecture_msgs::TrackedObject bbox;  // rosmsg show TrackedObjectArray
