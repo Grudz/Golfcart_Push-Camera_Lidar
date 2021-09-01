@@ -4,9 +4,8 @@ namespace golfcart_push {
 
 LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new pcl::search::KdTree<pcl::PointXYZI>)
 {
-  // Pointcloud subscriber
+  // Pubs and subs
   sub_cloud_ = n.subscribe("input_points", 10, &LidarFilter::recvCloud, this);
-
   pub_cloud_= n.advertise<sensor_msgs::PointCloud2>("filtered_cloud", 1);
   pub_bbox_= n.advertise<avs_lecture_msgs::TrackedObjectArray>("bounding_boxes", 1);
 
@@ -23,10 +22,8 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
 
     // Create pointer to PCL type variable
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
-    //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_out(new pcl::PointCloud<pcl::PointXYZI>);
-    //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(new pcl::PointCloud<pcl::PointXYZ>);
-
+    
     pcl::fromROSMsg(*msg, *cloud_in); 
 
     // Start filtering
@@ -80,7 +77,7 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
     ec.setClusterTolerance(cfg_.cluster_tol);
-    ec.setMinClusterSize(cfg_.min_cluster_size); // ------- TODO
+    ec.setMinClusterSize(cfg_.min_cluster_size); 
     ec.setMaxClusterSize(cfg_.max_cluster_size);
     kd_tree_->setInputCloud(cloud_out);
     ec.setSearchMethod(kd_tree_);
@@ -97,12 +94,10 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
       cluster->height = 1;
       cluster->is_dense = true;
       cluster_clouds.push_back(cluster);
-    }
+    }    
 
     // Use max and min of each cluster to create bbox
     pcl::PointXYZ min, max;  // Relative to the Lidar
-    //ROS_INFO("\n----- Loop Start -----\n");
-    //ROS_INFO("Clusters in scan = %d\n", (int)cluster_clouds.size());  // Is this so bad? Draw a new box for each new sequence?
 
     // Copy header from passthrough cloud and clear array
     bbox_array_.header = pcl_conversions::fromPCL(cloud_out->header); // Nice way to get entire header easily
@@ -115,7 +110,6 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
       
       // Applying the min/max function
       pcl::getMinMax3D(*cluster, min, max);  // Get min/max 3D
-      //ROS_INFO("Header seq per cluster = %d\n", (int)cluster->header.seq);
 
       // Create bbox message, fill in fields, push it into bbox array
       avs_lecture_msgs::TrackedObject bbox;  // rosmsg show TrackedObjectArray
@@ -134,18 +128,10 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
       if (abs(bbox.bounding_box_scale.z) < cfg_.z_large)
       {
         continue;
-        //ROS_FATAL("\nCluster thrown out");
-        //std::cout << "X scale = " << bbox.bounding_box_scale.x << std::endl;
-        //std::cout << "Y scale = " << bbox.bounding_box_scale.y << std::endl;
-        //std::cout << "Z scale = " << bbox.bounding_box_scale.z << std::endl;
       } 
       else
       {
         bbox_array_.objects.push_back(bbox);
-        //ROS_WARN("\nCluster accepted with ID = %d", bbox.id);
-        //std::cout << "X scale = " << bbox.bounding_box_scale.x << std::endl;
-        //std::cout << "Y scale = " << bbox.bounding_box_scale.y << std::endl;
-        //std::cout << "Z scale = " << bbox.bounding_box_scale.z << std::endl;
       }      
     } 
     
@@ -171,11 +157,6 @@ LidarFilter::LidarFilter(ros::NodeHandle n, ros::NodeHandle pn) : kd_tree_(new p
     transformStamped.transform.rotation.y = quat.y();
     transformStamped.transform.rotation.z = quat.z();
     transformStamped.transform.rotation.w = quat.w();
-    /*transformStamped.transform.rotation.x = 0;
-    transformStamped.transform.rotation.y = 0;
-    transformStamped.transform.rotation.z = 0;
-    transformStamped.transform.rotation.w = 1;*/
-
 
     br.sendTransform(transformStamped);  
     push_ = push_ + cfg_.tf_increment;

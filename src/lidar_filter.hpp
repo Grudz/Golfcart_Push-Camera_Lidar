@@ -62,7 +62,7 @@ namespace golfcart_push {
     
       void timerCallback(const ros::TimerEvent& event);
       void reconfig(GolfcartPushConfig& config, uint32_t level);
-      void recvCloud(const sensor_msgs::PointCloud2ConstPtr& msg);  
+      void recvCloud(const sensor_msgs::PointCloud2ConstPtr& msg);  // Filter pointcloud - XYZI passthrough and SOR
 
       dynamic_reconfigure::Server<GolfcartPushConfig> srv_;
       GolfcartPushConfig cfg_;
@@ -71,11 +71,11 @@ namespace golfcart_push {
 
       ros::Subscriber sub_cloud_;
       ros::Publisher pub_cloud_;
+      ros::Publisher pub_cluster_cloud_;
+      ros::Publisher pub_bbox_;
 
       // KD search tree object for use by PCL functions
       pcl::search::Search<pcl::PointXYZI>::Ptr kd_tree_;
-      ros::Publisher pub_cluster_cloud_;
-      ros::Publisher pub_bbox_;
 
       // Publishing bounding box message
       avs_lecture_msgs::TrackedObjectArray bbox_array_;

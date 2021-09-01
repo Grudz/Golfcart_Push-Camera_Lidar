@@ -3,8 +3,7 @@
   <!-- Parse the URDF model and store the result in the 'robot_description' parameter -->
   <param name="robot_description" command="$(find xacro)/xacro '$(find golfcart_push)/urdf/r3d3_visual.urdf.xacro'" />
 
-  <!-- This node loads the 'robot_description' parameter, subscribes to the 'joint_states' topic,
-       and publishes TF transforms for the robot's joints -->
+  <!-- This node loads the 'robot_description' parameter, subscribes to the 'joint_states' topic, and publishes TF transforms for the robot's joints -->
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" />
 
   <node pkg="golfcart_push" type="r3d3_joint_pub" name="r3d3_joint_pub" />
